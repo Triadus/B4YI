@@ -1,0 +1,92 @@
+{% extends 'dashboard/base.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-xl-4">
+            <div class="card">
+                <div class="card-body">
+                    <div>
+                        <div class="mb-4 me-3">
+                            <i class="mdi mdi-account-circle text-primary h1"></i>
+                        </div>
+                        <div>
+                            <h5>{{ user.username }}</h5>
+                            <p class="text-muted mb-1">{{ user.email }}</p>
+                            <p class="text-muted mb-0">Id no: #B4Y00{{ user.id }}</p>
+
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body border-top">
+                    <div class="row">
+                        <div class="col">
+                            <p class="fw-medium mb-2">Balance :</p>
+                            {% for wallet in wallets %}
+                                <ul class="list-inline mb-1">
+                                    <li class="list-inline-item">
+                                        <img src="{{ wallet.currency.currency_image.url }}"
+                                             alt="{{ wallet.currency.name }}" height="20">
+                                    </li>
+                                    <li class="list-inline-item">
+                                        <h5>{{ wallet.currency }} - {{ wallet.formatted_balance }}</h5>
+                                    </li>
+                                    <li class="list-inline-item">
+                                        <h5>$ </h5>
+                                    </li>
+                                </ul>
+                            {% empty %}
+                                <ul class="list-inline mb-0">
+                                    <li class="list-inline-item">
+                                        You don't have wallets!
+                                    </li>
+                                </ul>
+                            {% endfor %}
+                        </div>
+                        <div class="btn-group btn-group-example mt-3" role="group">
+                            <button type="button" class="btn btn-primary bg-gradient"><a
+                                    href="{% url 'replenishment' %}"
+                                    class="text-light">Deposit</a>
+                            </button>
+                            <button type="button" class="btn btn-success bg-gradient"><a href="{% url 'withdrawal' %}"
+                                                                                         class="text-light">Withdrawal</a>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-8">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title mb-3">Currency rates</h4>
+                    <div class="row border-top">
+
+                        {% for exchange_rate in exchange_rates %}
+                            <div class="col-md-3">
+                                <div class="card d-flex flex-column align-items-center mb-1 mt-3">
+                                    <img class="img-fluid m-2" width="30"
+                                         src="{{ exchange_rate.currency.currency_image.url }}"
+                                         alt="{{ exchange_rate.currency.name }}">
+                                    <h5 class="card-title mb-1">{{ exchange_rate.currency.name }}</h5>
+                                    <p class="mb-0">$ {{ exchange_rate.rate }}</p>
+                                    <p class="mb-3">
+                                        <small class="text-muted"> 24H: {{ exchange_rate.price_change }}
+                                            ( {{ exchange_rate.percent_change_1h }} % )</small>
+                                    </p>
+                                </div>
+                            </div>
+
+                        {% endfor %}
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_javascript %}
+    <script src="{% static 'libs/apexcharts/dist/apexcharts.min.js' %}"></script>
+    <script src="{% static 'js/dashboard.init.js' %}"></script>
+{% endblock %}

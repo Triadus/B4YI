@@ -1,0 +1,16 @@
+coreapi==2.3.3
+Django==4.2.2
+django_allauth==0.52.0
+django_crispy_forms==1.14.0
+django-embed-video==1.4.8
+python-dotenv==1.0.0
+Requests==2.31.0
+crispy-bootstrap4==2022.1
+celery==5.3.1
+binance==0.3
+binance-futures-connector==3.3.0
+Markdown==3.3.7
+mkdocs==1.4.2
+mysqlclient==2.1.1
+python-binance==1.0.17
+Pillow==9.4.0

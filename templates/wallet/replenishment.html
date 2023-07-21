@@ -1,0 +1,19 @@
+{% extends 'dashboard/base.html' %}
+{% load crispy_forms_tags %}
+{% load crispy_forms_filters %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Wallet replenishment request</h4>
+                    <form method="post">
+                        {% crispy form %}
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+{% endblock %}

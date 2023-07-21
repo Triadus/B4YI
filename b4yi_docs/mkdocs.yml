@@ -1,0 +1,5 @@
+site_name: B4YI
+
+theme:
+  name: mkdocs
+  locale: ru
