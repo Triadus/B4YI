@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin, messages
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.html import format_html
+
 from .models import Wallet, Currency, ProfitWallet, InvestmentPlan, WalletReplenishmentRequest, WalletWithdrawalRequest, \
     Transaction, ExchangeRate, Investment, ProfitTransaction, InvestmentsInfo
 from .tasks import update_exchange_rates, calculate_profit
@@ -107,6 +109,26 @@ class WalletReplenishmentRequestAdmin(admin.ModelAdmin):
             if replenishment_request.is_approved:
 
                 if not replenishment_request.is_executed:
+
+                    try:
+                        transaction = Transaction.objects.filter(user=replenishment_request.user,
+                                                                 currency=replenishment_request.currency,
+                                                                 transaction_type='replenishment',
+                                                                 status='pending').latest('date_created')
+                        # Используем latest('date_created') для получения последней созданной транзакции
+                        transaction.mark_completed()
+                    except ObjectDoesNotExist:
+                        # Если нет транзакции с указанными параметрами, создаем новую
+                        Transaction.objects.create(
+                            user=replenishment_request.user,
+                            transaction_type='replenishment',
+                            currency=replenishment_request.currency,
+                            amount=replenishment_request.amount,
+                            status='completed'
+                        )
+
+                    replenishment_request.mark_executed()
+
                     wallet, created = Wallet.objects.get_or_create(user=replenishment_request.user,
                                                                    currency=replenishment_request.currency)
                     if created:
@@ -114,13 +136,6 @@ class WalletReplenishmentRequestAdmin(admin.ModelAdmin):
                     wallet.balance += replenishment_request.amount
                     wallet.last_replenishment = timezone.now()
                     wallet.save()
-
-                    transaction = Transaction.objects.get(user=replenishment_request.user,
-                                                          currency=replenishment_request.currency,
-                                                          transaction_type='replenishment', status='pending')
-                    transaction.mark_completed()
-
-                    replenishment_request.mark_executed()
 
                     send_mail(
                         'Replenishment ',

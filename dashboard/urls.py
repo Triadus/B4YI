@@ -1,4 +1,7 @@
+from django.conf import settings
+from django.conf.urls.static import static
 from django.urls import path
+
 from .views import DashboardView, WalletReplenishmentRequestView, ReplenishmentSuccessView, WalletWithdrawalRequestView, \
     WithdrawalSuccessView, WalletView, InvestmentView, CancelInvestmentView, AddFundsView
 from .views import get_chart_data
@@ -19,3 +22,7 @@ urlpatterns = [
     path('investment/<uuid:pk>/cancel/', CancelInvestmentView.as_view(), name='cancel_investment'),
     path('investment/<uuid:pk>/add-funds/', AddFundsView.as_view(), name='add_funds'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
