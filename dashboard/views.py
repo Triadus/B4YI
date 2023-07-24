@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from datetime import datetime
 
 from _decimal import Decimal
 from allauth.account.views import PasswordChangeView, PasswordSetView
@@ -8,12 +7,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.mail import mail_admins
 from django.db.models import Sum, ExpressionWrapper, FloatField, F
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
-from django.utils import timezone
-
 from django.views import View
+
 from .forms import WalletReplenishmentRequestForm, WalletWithdrawalRequestForm, InvestmentForm
 from .models import Wallet, WalletWithdrawalRequest, Transaction, ExchangeRate, Investment, InvestmentPlan, Currency, \
     InvestmentsInfo
@@ -22,13 +20,17 @@ from .models import Wallet, WalletWithdrawalRequest, Transaction, ExchangeRate, 
 class DashboardView(LoginRequiredMixin, View):
     def get(self, request):
         user = request.user
-        wallets = Wallet.objects.filter(user=user)
+        wallets = Wallet.objects.filter(user=user).select_related('currency')
 
-        exchange_rates = ExchangeRate.objects.all()
+        # exchange_rates = ExchangeRate.objects.all().select_related('currency')# метод для уменьшения кол-ва запросов в базу данных
+
+        for wallet in wallets:
+            exchange_rate = ExchangeRate.objects.get(currency=wallet.currency)
+            wallet.usdt_equivalent = wallet.balance * exchange_rate.rate
 
         context = {
             'wallets': wallets,
-            'exchange_rates': exchange_rates,
+            # 'exchange_rates': exchange_rates,
         }
 
         return render(request, 'dashboard/dashboard.html', context)
@@ -129,11 +131,13 @@ class WithdrawalSuccessView(LoginRequiredMixin, View):
 class WalletView(LoginRequiredMixin, View):
 
     def get(self, request):
-        user_transactions = Transaction.objects.filter(user=request.user).order_by('date_created')
-        balance_datas = Wallet.objects.filter(user=request.user)
+        user_transactions = Transaction.objects.filter(user=request.user).order_by('date_created').select_related(
+            'currency')
+        balance_datas = Wallet.objects.filter(user=request.user).select_related('currency')
+        exchange_rates = ExchangeRate.objects.all().select_related('currency')
 
         for balance_data in balance_datas:
-            exchange_rate = ExchangeRate.objects.get(currency=balance_data.currency)
+            exchange_rate = ExchangeRate.objects.select_related('currency').get(currency=balance_data.currency)
             balance_data.usdt_equivalent = balance_data.balance * exchange_rate.rate
 
         total_usdt_balance = balance_datas.annotate(
@@ -143,10 +147,24 @@ class WalletView(LoginRequiredMixin, View):
             )
         ).aggregate(Sum('usdt_equivalent'))['usdt_equivalent__sum']
 
+        total_usd_replenishment = Transaction.objects.filter(transaction_type='replenishment', status='completed') \
+            .aggregate(total_replenishment=Sum(F('amount') * F('currency__exchangerate__rate'))) \
+            .get('total_replenishment', 0)
+
+        total_usd_withdrawal = Transaction.objects.filter(transaction_type='withdrawal', status='completed') \
+            .aggregate(total_withdrawal=Sum(F('amount') * F('currency__exchangerate__rate'))) \
+            .get('total_withdrawal', 0)
+
+        if total_usd_withdrawal is None:
+            total_usd_withdrawal = 0
+
         context = {
             'transactions': user_transactions,
             'balance_datas': balance_datas,
             'total_usdt_balance': total_usdt_balance,
+            'exchange_rates': exchange_rates,
+            'total_usd_replenishment': total_usd_replenishment,
+            'total_usd_withdrawal': total_usd_withdrawal,
         }
 
         return render(request, 'wallet/wallet.html', context)

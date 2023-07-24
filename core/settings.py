@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import os
-
 from pathlib import Path
 
+from django.utils.translation import gettext_lazy as _
 from dotenv import load_dotenv
 
 env_path = Path('.') / '.env'
@@ -63,6 +63,17 @@ TEMPLATES = [
     },
 ]
 
+try:
+    from .local_settings import *
+except ImportError:
+    from .prod_settings import *
+
+# Debug toolbar
+if DEBUG:
+    MIDDLEWARE += ['debug_toolbar.middleware.DebugToolbarMiddleware']
+    INSTALLED_APPS += ['debug_toolbar', ]
+    INTERNAL_IPS = ['127.0.0.1', ]
+
 WSGI_APPLICATION = 'core.wsgi.application'
 
 AUTHENTICATION_BACKENDS = (
@@ -77,7 +88,7 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
         'OPTIONS': {
-            'min_length': 4,
+            'min_length': 8,
         },
     },
     {
@@ -89,6 +100,9 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 LANGUAGE_CODE = 'en'
+LANGUAGES = [
+    ('en', _('English')),
+]
 
 TIME_ZONE = 'Europe/Sofia'
 
@@ -181,8 +195,3 @@ CELERY_RESULT_SERIALIZER = 'json'
 # ]
 
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
-
-try:
-    from .local_settings import *
-except ImportError:
-    from .prod_settings import *

@@ -10,6 +10,8 @@ from .models import Wallet, Currency, ProfitWallet, InvestmentPlan, WalletReplen
     Transaction, ExchangeRate, Investment, ProfitTransaction, InvestmentsInfo
 from .tasks import update_exchange_rates, calculate_profit
 
+admin.site.site_header = 'B4YI ADMIN-PANEL'
+
 
 @admin.register(Wallet)
 class WalletAdmin(admin.ModelAdmin):
@@ -21,19 +23,24 @@ class WalletAdmin(admin.ModelAdmin):
 
 @admin.register(Currency)
 class CurrencyAdmin(admin.ModelAdmin):
+    list_display = ('name', 'code', 'image_tag',)
+
     def image_tag(self, obj):
         if obj.currency_image:
             return format_html('<img src="%s" width="22" height="22" />' % obj.currency_image.url)
 
     image_tag.short_description = 'Currency Image'
     image_tag.allow_tags = True
-    list_display = ('name', 'code', 'image_tag',)
+
+    fields = ('name', 'code', 'currency_image', 'image_tag',)
+    readonly_fields = ('image_tag',)
 
 
 @admin.register(ExchangeRate)
 class ExchangeRateAdmin(admin.ModelAdmin):
     list_display = ['currency', 'rate', 'percent_change_1h', 'last_updated']
     actions = ['update_rates']
+    actions_selection_counter = True
 
     def update_rates(self, request, queryset):
         update_exchange_rates()

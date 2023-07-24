@@ -4,86 +4,224 @@
 {% block content %}
     <div class="row">
         <div class="col-xl-4">
-            <div class="card">
-                <div class="card-body">
-                    <div>
-                        <div class="mb-4 me-3">
-                            <i class="mdi mdi-account-circle text-primary h1"></i>
-                        </div>
-                        <div>
-                            <h5>{{ user.username }}</h5>
-                            <p class="text-muted mb-1">{{ user.email }}</p>
-                            <p class="text-muted mb-0">Id no: #B4Y00{{ user.id }}</p>
-
+            <div class="card bg-primary bg-soft">
+                <div class="row p-3">
+                    <div class="col-8">
+                        <div class="text-primary">
+                            <h5 class="text-dark mb-1">{{ user.username }}</h5>
+                            <p class="text-muted mb-1">Id no: <span
+                                    class="badge badge-soft-secondary">#B4Y00 {{ user.id }}</span></p>
+                            <p class="text-muted mb-1">email: <span
+                                    class="badge badge-soft-secondary">{{ user.email }}</span></p>
                         </div>
                     </div>
+                    <div class="col-4 align-self-center">
+                        <img src="{% static 'images/users/user-dummy-img.jpg' %}" alt=""
+                             class="rounded-circle avatar-md">
+                    </div>
                 </div>
-                <div class="card-body border-top">
-                    <div class="row">
-                        <div class="col">
-                            <p class="fw-medium mb-2">Balance :</p>
-                            {% for wallet in wallets %}
-                                <ul class="list-inline mb-1">
-                                    <li class="list-inline-item">
-                                        <img src="{{ wallet.currency.currency_image.url }}"
-                                             alt="{{ wallet.currency.name }}" height="20">
-                                    </li>
-                                    <li class="list-inline-item">
-                                        <h5>{{ wallet.currency }} - {{ wallet.balance }}</h5>
-                                    </li>
-                                    <li class="list-inline-item">
-                                        <h5>$ </h5>
-                                    </li>
-                                </ul>
-                            {% empty %}
-                                <ul class="list-inline mb-0">
-                                    <li class="list-inline-item">
-                                        You don't have wallets!
-                                    </li>
-                                </ul>
-                            {% endfor %}
-                        </div>
-                        <div class="btn-group btn-group-example mt-3" role="group">
-                            <button type="button" class="btn btn-primary bg-gradient"><a
-                                    href="{% url 'replenishment' %}"
-                                    class="text-light">Deposit</a>
-                            </button>
-                            <button type="button" class="btn btn-success bg-gradient"><a href="{% url 'withdrawal' %}"
-                                                                                         class="text-light">Withdrawal</a>
-                            </button>
-                        </div>
+                <div class="row p-3">
+                    <div class="col-12">
+                        <p class="fw-medium mb-2">Balance :</p>
+                        {% for wallet in wallets %}
+                            <ul class="list-inline mb-1">
+                                <li class="list-inline-item">
+                                    <img src="{{ wallet.currency.currency_image.url }}"
+                                         alt="{{ wallet.currency.name }}" height="20">
+                                </li>
+                                <li class="list-inline-item">
+                                    <h5>{{ wallet.currency }} {{ wallet.balance }}</h5>
+                                </li>
+                                <li class="list-inline-item">
+                                    <span> ($ {{ wallet.usdt_equivalent|floatformat:2 }})</span>
+                                </li>
+                            </ul>
+                        {% empty %}
+                            <ul class="list-inline mb-0">
+                                <li class="list-inline-item">
+                                    You don't have wallets!
+                                </li>
+                            </ul>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-xl-8">
-            <div class="card">
-                <div class="card-body">
-                    <h4 class="card-title mb-3">Currency rates</h4>
-                    <div class="row border-top">
-
-                        {% for exchange_rate in exchange_rates %}
-                            <div class="col-md-3">
-                                <div class="card d-flex flex-column align-items-center mb-1 mt-3">
-                                    <img class="img-fluid m-2" width="30"
-                                         src="{{ exchange_rate.currency.currency_image.url }}"
-                                         alt="{{ exchange_rate.currency.name }}">
-                                    <h5 class="card-title mb-1">{{ exchange_rate.currency.name }}</h5>
-                                    <p class="mb-0">$ {{ exchange_rate.rate }}</p>
-                                    <p class="mb-3">
-                                        <small class="text-muted"> 24H: {{ exchange_rate.price_change }}
-                                            ( {{ exchange_rate.percent_change_1h }} % )</small>
-                                    </p>
+            <div class="row">
+                <div class="col-sm-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="avatar-xs me-3">
+                                                        <span class="avatar-title rounded-circle bg-primary bg-soft text-primary font-size-18">
+                                                            <i class="bx bx-copy-alt"></i>
+                                                        </span>
+                                </div>
+                                <h5 class="font-size-14 mb-0">Daily Profits</h5>
+                            </div>
+                            <div class="text-muted mt-4">
+                                <h4>1,452 <i class="mdi mdi-chevron-up ms-1 text-success"></i></h4>
+                                <div class="d-flex">
+                                    <span class="badge badge-soft-success font-size-12"> + 0.2% </span> <span
+                                        class="ms-2 text-truncate">From previous period</span>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
 
-                        {% endfor %}
+                <div class="col-sm-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="avatar-xs me-3">
+                                                        <span class="avatar-title rounded-circle bg-primary bg-soft text-primary font-size-18">
+                                                            <i class="bx bx-archive-in"></i>
+                                                        </span>
+                                </div>
+                                <h5 class="font-size-14 mb-0">Monthly Profits</h5>
+                            </div>
+                            <div class="text-muted mt-4">
+                                <h4>$ 28,452 <i class="mdi mdi-chevron-up ms-1 text-success"></i></h4>
+                                <div class="d-flex">
+                                    <span class="badge badge-soft-success font-size-12"> + 0.2% </span> <span
+                                        class="ms-2 text-truncate">From previous period</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="avatar-xs me-3">
+                                                        <span class="avatar-title rounded-circle bg-primary bg-soft text-primary font-size-18">
+                                                            <i class="bx bx-purchase-tag-alt"></i>
+                                                        </span>
+                                </div>
+                                <h5 class="font-size-14 mb-0">All Time Profit</h5>
+                            </div>
+                            <div class="text-muted mt-4">
+                                <h4>$ 16.2 <i class="mdi mdi-chevron-up ms-1 text-success"></i></h4>
+
+                                <div class="d-flex">
+                                    <span class="badge badge-soft-warning font-size-12"> 0% </span> <span
+                                        class="ms-2 text-truncate">From previous period</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- end row -->
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-4">
+            <div class="card">
+                <div class="card-body">
+                    <p class="text-muted mb-4"><i class="mdi mdi-bitcoin h2 text-warning align-middle mb-0 me-3"></i>
+                        Bitcoin </p>
+
+                    <div class="row">
+                        <div class="col-6">
+                            <div>
+                                <h5>$ 9134.39</h5>
+                                <p class="text-muted text-truncate mb-0">+ 0.0012 ( 0.2 % ) <i
+                                        class="mdi mdi-arrow-up ms-1 text-success"></i></p>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div>
+                                <div id="area-sparkline-chart-1" data-colors='["--bs-warning"]'
+                                     class="apex-charts"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="card">
+                <div class="card-body">
+                    <p class="text-muted mb-4"><i class="mdi mdi-ethereum h2 text-primary align-middle mb-0 me-3"></i>
+                        Ethereum </p>
+
+                    <div class="row">
+                        <div class="col-6">
+                            <div>
+                                <h5>$ 245.44</h5>
+                                <p class="text-muted text-truncate mb-0">- 4.102 ( 0.1 % ) <i
+                                        class="mdi mdi-arrow-down ms-1 text-danger"></i></p>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div>
+                                <div id="area-sparkline-chart-2" data-colors='["--bs-primary"]'
+                                     class="apex-charts"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <div class="card">
+                <div class="card-body">
+                    <p class="text-muted mb-4"><i class="mdi mdi-litecoin h2 text-info align-middle mb-0 me-3"></i>
+                        litecoin </p>
+
+                    <div class="row">
+                        <div class="col-6">
+                            <div>
+                                <h5>$ 63.61</h5>
+                                <p class="text-muted text-truncate mb-0">+ 1.792 ( 0.1 % ) <i
+                                        class="mdi mdi-arrow-up ms-1 text-success"></i></p>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div>
+                                <div id="area-sparkline-chart-3" data-colors='["--bs-info"]' class="apex-charts"></div>
+                            </div>
+                        </div>
                     </div>
 
                 </div>
             </div>
         </div>
     </div>
+    <div class="col-xl-12">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title mb-3">Overview</h4>
+
+                <div>
+
+                    <div id="overview-chart" class="apex-charts" dir="ltr">
+                        <div class="toolbar d-flex flex-wrap gap-2 justify-content-center">
+                            <button type="button" class="btn btn-light btn-sm" id="one_month">
+                                1M
+                            </button>
+                            <button type="button" class="btn btn-light btn-sm" id="six_months">
+                                6M
+                            </button>
+                            <button type="button" class="btn btn-light btn-sm active" id="one_year">
+                                1Y
+                            </button>
+                            <button type="button" class="btn btn-light btn-sm" id="all">
+                                ALL
+                            </button>
+                        </div>
+                        <div id="overview-chart-timeline" data-colors='["--bs-warning"]'></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 {% endblock %}
 
 {% block extra_javascript %}
