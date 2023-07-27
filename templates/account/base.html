@@ -44,6 +44,14 @@
 {% block content %}
 
 {% endblock content %}
+{% block crafted %}
+    <div class="text-center">
+        <p>©
+            <script>document.write(new Date().getFullYear())</script>
+            B4YI. Crafted with <i class="mdi mdi-cryengine text-success"></i> by Cryptus
+        </p>
+    </div>
+{% endblock crafted %}
 <script src="{% static 'libs/jquery/dist/jquery.min.js' %}"></script>
 <script src="{% static 'libs/bootstrap/dist/js/bootstrap.bundle.min.js' %}"></script>
 <script src="{% static 'libs/metismenu/dist/metisMenu.min.js' %}"></script>
