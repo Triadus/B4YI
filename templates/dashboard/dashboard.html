@@ -1,220 +1,216 @@
 {% extends 'dashboard/base.html' %}
+{% load crispy_forms_filters %}
 {% load static %}
 
 {% block content %}
     <div class="row">
         <div class="col-xl-4">
-            <div class="card bg-primary bg-soft">
-                <div class="row p-3">
-                    <div class="col-8">
-                        <div class="text-primary">
-                            <h5 class="text-dark mb-1">{{ user.username }}</h5>
-                            <p class="text-muted mb-1">Id no: <span
-                                    class="badge badge-soft-secondary">#B4Y00 {{ user.id }}</span></p>
-                            <p class="text-muted mb-1">email: <span
-                                    class="badge badge-soft-secondary">{{ user.email }}</span></p>
+            <div class="card overflow-hidden">
+                <div class="bg-primary bg-soft">
+                    <div class="row">
+                        <div class="col-7">
+                            <div class="text-primary p-3">
+                                <h5 class="text-primary">Welcome Back !</h5>
+                                <p>Best for you invest</p>
+                            </div>
                         </div>
                     </div>
-                    <div class="col-4 align-self-center">
-                        <img src="{% static 'images/users/user-dummy-img.jpg' %}" alt=""
-                             class="rounded-circle avatar-md">
-                    </div>
                 </div>
-                <div class="row p-3">
-                    <div class="col-12">
-                        <p class="fw-medium mb-2">Balance :</p>
-                        {% for wallet in wallets %}
-                            <ul class="list-inline mb-1">
-                                <li class="list-inline-item">
-                                    <img src="{{ wallet.currency.currency_image.url }}"
-                                         alt="{{ wallet.currency.name }}" height="20">
-                                </li>
-                                <li class="list-inline-item">
-                                    <h5>{{ wallet.currency }} {{ wallet.balance }}</h5>
-                                </li>
-                                <li class="list-inline-item">
-                                    <span> ($ {{ wallet.usdt_equivalent|floatformat:2 }})</span>
-                                </li>
-                            </ul>
-                        {% empty %}
-                            <ul class="list-inline mb-0">
-                                <li class="list-inline-item">
-                                    You don't have wallets!
-                                </li>
-                            </ul>
-                        {% endfor %}
+                <div class="card-body pt-0">
+                    <div class="row">
+                        <div class="col-sm-4">
+                            <div class="avatar-md profile-user-wid mb-4">
+                                {% if user_profile.avatar %}
+                                    <img src="{{ user_profile.avatar.url }}" alt="profile_avatar"
+                                         class="rounded-circle avatar-md">
+                                {% else %}
+                                    <img src="{% static 'images/users/user-dummy-img.jpg' %}" alt=""
+                                         class="rounded-circle avatar-md">
+                                {% endif %}
+                            </div>
+                            <h5 class="font-size-15 text-truncate">{{ user.username }}</h5>
+                            <p class="text-muted mb-0 text-truncate">{{ user_profile.first_name }}</p>
+                        </div>
+                        <div class="col-sm-8">
+                            <div class="pt-4">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <h5 class="font-size-15">Id no: <span
+                                                class="badge badge-soft-secondary mt-1">#B4Y00 {{ user.id }}</span></h5>
+                                    </div>
+                                    <div class="col-6">
+                                        <h5 class="font-size-15">E-mail: <span
+                                                class="badge badge-soft-secondary">{{ user.email }}</span></h5>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <button type="button" class="btn btn-primary waves-effect waves-light btn-sm"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#editProfileModal">
+                                        Edit Profile <i
+                                            class="mdi mdi-arrow-right ms-1"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-xl-8">
             <div class="row">
-                <div class="col-sm-4">
-                    <div class="card">
+                <div class="col-sm-12">
+                    <div class="card overflow-hidden">
+                        <div class="bg-primary bg-soft">
+                            <div class="row m-2">
+                                <div class="col-6 d-flex flex-row mt-2">
+                                    {% for wallet in wallets %}
+                                        <img style="margin-right: 0.5rem;" src="{{ wallet.coin.coin_image.url }}"
+                                             alt="{{ wallet.coin.name }}" height="20">
+                                        <h5>{{ wallet.coin.code }} <span
+                                                class="font-size-12">{{ wallet.coin.name }}</span></h5>
+                                    {% endfor %}
+                                </div>
+                                <div class="col-6 d-flex justify-content-end mt-2">
+                                    {% for wallet in wallets %}
+                                        <h5>{{ wallet.balance }} <span
+                                                class="font-size-12"> ($ {{ wallet.usdt_equivalent|floatformat:2 }})</span>
+                                        </h5>
+                                    {% empty %}
+                                        <ul class="list-inline mb-0">
+                                            <li class="list-inline-item">
+                                                You don't have any Coins!
+                                            </li>
+                                        </ul>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
                         <div class="card-body">
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="avatar-xs me-3">
+                            <div class="row">
+                                <div class="col-sm-4">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="avatar-xs me-3">
+                                                    <span class="avatar-title rounded-circle bg-primary bg-soft text-primary font-size-18">
+                                                        <i class="bx bx-data"></i>
+                                                    </span>
+                                                </div>
+                                                <h5 class="font-size-14 mb-0">Daily Profits</h5>
+                                            </div>
+                                            <div class="text-muted">
+                                                <span>Today:</span>
+                                                <div class="d-flex mt-1">
+                                                    <h5 class="ms-1">{{ profit_today|floatformat:3 }}</h5>
+                                                    {% if profit_day_change_percentage > 0 %}
+                                                        <span class="ms-1 font-size-12 text-success"> +{{ profit_day_change_percentage|floatformat:2 }}% </span>
+                                                    {% elif profit_day_change_percentage < 0 %}
+                                                        <span class="ms-1 font-size-12 text-danger">  {{ profit_day_change_percentage|floatformat:2 }}% </span>
+                                                    {% endif %}
+                                                </div>
+                                                <span>Yesterday:</span>
+                                                <div class="d-flex mt-1">
+                                                    <h5 class="ms-1">{{ profit_yesterday|floatformat:3 }}</h5>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="avatar-xs me-3">
                                                         <span class="avatar-title rounded-circle bg-primary bg-soft text-primary font-size-18">
-                                                            <i class="bx bx-copy-alt"></i>
+                                                            <i class="bx bx-money"></i>
                                                         </span>
+                                                </div>
+                                                <h5 class="font-size-14 mb-0">Monthly Profits</h5>
+                                            </div>
+                                            <div class="text-muted">
+                                                <span>Current month:</span>
+                                                <div class="d-flex mt-1">
+                                                    <h5 class="ms-1">{{ profit_current_month|floatformat:3 }}</h5>
+                                                    {% if profit_month_change_percentage > 0 %}
+                                                        <span class="ms-1 font-size-12 text-success"> +{{ profit_month_change_percentage|floatformat:2 }}% </span>
+                                                    {% elif profit_month_change_percentage < 0 %}
+                                                        <span class="ms-1 font-size-12 text-danger">  {{ profit_month_change_percentage|floatformat:2 }}% </span>
+                                                    {% endif %}
+                                                </div>
+                                                <span>Last month:</span>
+                                                <div class="d-flex mt-1">
+                                                    <h5 class="ms-1">{{ profit_last_month|floatformat:3 }}</h5>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <h5 class="font-size-14 mb-0">Daily Profits</h5>
-                            </div>
-                            <div class="text-muted mt-4">
-                                <h4>1,452 <i class="mdi mdi-chevron-up ms-1 text-success"></i></h4>
-                                <div class="d-flex">
-                                    <span class="badge badge-soft-success font-size-12"> + 0.2% </span> <span
-                                        class="ms-2 text-truncate">From previous period</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-sm-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="avatar-xs me-3">
+                                <div class="col-sm-4">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center mb-3">
+                                                <div class="avatar-xs me-3">
                                                         <span class="avatar-title rounded-circle bg-primary bg-soft text-primary font-size-18">
-                                                            <i class="bx bx-archive-in"></i>
+                                                            <i class="bx bx-time"></i>
                                                         </span>
-                                </div>
-                                <h5 class="font-size-14 mb-0">Monthly Profits</h5>
-                            </div>
-                            <div class="text-muted mt-4">
-                                <h4>$ 28,452 <i class="mdi mdi-chevron-up ms-1 text-success"></i></h4>
-                                <div class="d-flex">
-                                    <span class="badge badge-soft-success font-size-12"> + 0.2% </span> <span
-                                        class="ms-2 text-truncate">From previous period</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-sm-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="avatar-xs me-3">
-                                                        <span class="avatar-title rounded-circle bg-primary bg-soft text-primary font-size-18">
-                                                            <i class="bx bx-purchase-tag-alt"></i>
-                                                        </span>
-                                </div>
-                                <h5 class="font-size-14 mb-0">All Time Profit</h5>
-                            </div>
-                            <div class="text-muted mt-4">
-                                <h4>$ 16.2 <i class="mdi mdi-chevron-up ms-1 text-success"></i></h4>
-
-                                <div class="d-flex">
-                                    <span class="badge badge-soft-warning font-size-12"> 0% </span> <span
-                                        class="ms-2 text-truncate">From previous period</span>
+                                                </div>
+                                                <h5 class="font-size-14 mb-0">All Time Profit</h5>
+                                            </div>
+                                            <div class="text-muted">
+                                                <div class="d-flex mt-1">
+                                                    <h4 class="ms-1">$ {{ profit_all_time|floatformat:3 }}</h4>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-            <!-- end row -->
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-sm-4">
-            <div class="card">
-                <div class="card-body">
-                    <p class="text-muted mb-4"><i class="mdi mdi-bitcoin h2 text-warning align-middle mb-0 me-3"></i>
-                        Bitcoin </p>
-
-                    <div class="row">
-                        <div class="col-6">
-                            <div>
-                                <h5>$ 9134.39</h5>
-                                <p class="text-muted text-truncate mb-0">+ 0.0012 ( 0.2 % ) <i
-                                        class="mdi mdi-arrow-up ms-1 text-success"></i></p>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div>
-                                <div id="area-sparkline-chart-1" data-colors='["--bs-warning"]'
-                                     class="apex-charts"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-4">
-            <div class="card">
-                <div class="card-body">
-                    <p class="text-muted mb-4"><i class="mdi mdi-ethereum h2 text-primary align-middle mb-0 me-3"></i>
-                        Ethereum </p>
-
-                    <div class="row">
-                        <div class="col-6">
-                            <div>
-                                <h5>$ 245.44</h5>
-                                <p class="text-muted text-truncate mb-0">- 4.102 ( 0.1 % ) <i
-                                        class="mdi mdi-arrow-down ms-1 text-danger"></i></p>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div>
-                                <div id="area-sparkline-chart-2" data-colors='["--bs-primary"]'
-                                     class="apex-charts"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-4">
-            <div class="card">
-                <div class="card-body">
-                    <p class="text-muted mb-4"><i class="mdi mdi-litecoin h2 text-info align-middle mb-0 me-3"></i>
-                        litecoin </p>
-
-                    <div class="row">
-                        <div class="col-6">
-                            <div>
-                                <h5>$ 63.61</h5>
-                                <p class="text-muted text-truncate mb-0">+ 1.792 ( 0.1 % ) <i
-                                        class="mdi mdi-arrow-up ms-1 text-success"></i></p>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div>
-                                <div id="area-sparkline-chart-3" data-colors='["--bs-info"]' class="apex-charts"></div>
-                            </div>
-                        </div>
-                    </div>
-
                 </div>
             </div>
         </div>
     </div>
+
     <div class="col-xl-12">
-        <div class="card">
-            <div class="card-body">
-                <h4 class="card-title mb-3">Overview</h4>
-                <div>
-                    <div id="overview-chart" class="apex-charts" dir="ltr">
-                        <div class="toolbar d-flex flex-wrap gap-2 justify-content-center">
-                            <button type="button" class="btn btn-light btn-sm" id="one_month">
-                                1M
-                            </button>
-                            <button type="button" class="btn btn-light btn-sm" id="six_months">
-                                6M
-                            </button>
-                            <button type="button" class="btn btn-light btn-sm active" id="one_year">
-                                1Y
-                            </button>
-                            <button type="button" class="btn btn-light btn-sm" id="all">
-                                ALL
-                            </button>
-                        </div>
-                        <div id="overview-chart-timeline" data-colors='["--bs-warning"]'></div>
-                    </div>
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title mb-3">Overview</h4>
+            <div id="profit-chart" class="apex-charts" dir="ltr">
+                <div class="toolbar d-flex flex-wrap gap-2 justify-content-center">
+                    <button type="button" class="btn btn-light btn-sm" id="one_month">
+                        1M
+                    </button>
+                    <button type="button" class="btn btn-light btn-sm" id="six_months">
+                        6M
+                    </button>
+                    <button type="button" class="btn btn-light btn-sm" id="one_year">
+                        1Y
+                    </button>
+                    <button type="button" class="btn btn-light btn-sm active" id="all">
+                        ALL
+                    </button>
+                </div>
+                <div id="profit-chart-timeline" data-colors='["--bs-warning"]'></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editProfileModalLabel">Edit Profile</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="post" enctype="multipart/form-data" id="editProfileForm">
+                        {% csrf_token %}
+                        {{ user_profile_form | crispy }}
+                        <button type="submit" class="btn btn-primary btn-sm w-md mt-3">Save Changes</button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -225,4 +221,5 @@
 {% block extra_javascript %}
     <script src="{% static 'libs/apexcharts/dist/apexcharts.min.js' %}"></script>
     <script src="{% static 'js/dashboard.init.js' %}"></script>
+
 {% endblock %}

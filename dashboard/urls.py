@@ -3,7 +3,7 @@ from django.conf.urls.static import static
 from django.urls import path
 
 from .views import DashboardView, WalletReplenishmentRequestView, ReplenishmentSuccessView, WalletWithdrawalRequestView, \
-    WithdrawalSuccessView, WalletView, InvestmentView, CancelInvestmentView, AddFundsView
+    WithdrawalSuccessView, WalletView, profit_chart_data
 from .views import get_chart_data
 
 urlpatterns = [
@@ -17,10 +17,8 @@ urlpatterns = [
 
     path('wallet/', WalletView.as_view(), name='wallet'),
     path('get_chart_data/', get_chart_data, name='get_chart_data'),
+    path('profit_chart_data/', profit_chart_data, name='profit_chart_data'),
 
-    path('investment/', InvestmentView.as_view(), name='investment'),
-    path('investment/<uuid:pk>/cancel/', CancelInvestmentView.as_view(), name='cancel_investment'),
-    path('investment/<uuid:pk>/add-funds/', AddFundsView.as_view(), name='add_funds'),
 ]
 
 if settings.DEBUG:

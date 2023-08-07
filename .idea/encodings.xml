@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Encoding">
+    <file url="file://$PROJECT_DIR$/.env" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/dashboard/urls.py" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/static/js/main.js" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/templates/account/logout-success.html" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/templates/dashboard/dashboard.html" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/templates/profile/profile.html" charset="windows-1251" />
+    <file url="file://$PROJECT_DIR$/templates/wallet/replenishment.html" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/templates/wallet/wallet.html" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/templates/wallet/withdrawal.html" charset="UTF-8" />
     <file url="PROJECT" charset="windows-1251" />
   </component>
 </project>

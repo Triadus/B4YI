@@ -9,7 +9,9 @@
                 <div class="card-body">
                     <h4 class="card-title">Wallet replenishment request</h4>
                     <form method="post">
-                        {% crispy form %}
+                        {% csrf_token %}
+                        {{ form | crispy }}
+                        <button type="submit" class="btn btn-primary mt-3">Submit</button>
                     </form>
                 </div>
             </div>

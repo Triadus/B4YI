@@ -2,9 +2,10 @@
 from allauth.account.forms import LoginForm, ResetPasswordForm, SignupForm, ChangePasswordForm, ResetPasswordKeyForm, \
     SetPasswordForm
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Submit, Layout, Field
 from django import forms
-from dashboard.models import WalletReplenishmentRequest, WalletWithdrawalRequest, InvestmentPlan, Currency
+from django.core.validators import RegexValidator
+
+from dashboard.models import WalletReplenishmentRequest, WalletWithdrawalRequest, UserProfile, CoinAddress, Coin
 
 
 class UserLoginForm(LoginForm):
@@ -82,37 +83,49 @@ class PasswordSetForm(SetPasswordForm):
 
 # Форма для запроса пополнения кошелька
 class WalletReplenishmentRequestForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        # self.fields['currency'].widget.attrs.update({'class': 'form-select'})
 
-        self.helper.layout = Layout(
-            Field('currency', css_class='form-select'),
-            Field('amount', css_class='input-group bootstrap-touchspin bootstrap-touchspin-injected'),
-            Submit('submit', 'Submit', css_class='waves-effect waves-light')
-        )
+    # Фильтрация по статусу если валюта активна
+    def __init__(self, *args, **kwargs):
+        super(WalletReplenishmentRequestForm, self).__init__(*args, **kwargs)
+        self.fields['coin'].queryset = Coin.objects.filter(is_active=True)
 
     class Meta:
         model = WalletReplenishmentRequest
-        fields = ['currency', 'amount']
+        fields = ['coin', 'amount']
 
 
 # Форма для запроса на вывод из кошелька
 class WalletWithdrawalRequestForm(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        super(WalletWithdrawalRequestForm, self).__init__(*args, **kwargs)
+        self.fields['coin'].queryset = Coin.objects.filter(is_active=True)
+
     class Meta:
         model = WalletWithdrawalRequest
-        fields = ['currency', 'amount']
+        fields = ['coin', 'amount']
 
 
-# Форма для выбора и активации инвестиционного плана
-class InvestmentForm(forms.Form):
-    plan = forms.ModelChoiceField(queryset=InvestmentPlan.objects.all(), empty_label=None, to_field_name='id')
-    currency = forms.ModelChoiceField(queryset=Currency.objects.all(), empty_label=None)
-    amount = forms.DecimalField(max_digits=10, decimal_places=2)
+# Форма профиля пользователя
+class UserProfileForm(forms.ModelForm):
+    class Meta:
+        model = UserProfile
+        fields = ['avatar', 'first_name', 'last_name', 'phone_number']
+        widgets = {
+            'phone_number': forms.TextInput(attrs={'placeholder': '+999999999'}),
+        }
 
-    def clean_amount(self):
-        amount = self.cleaned_data['amount']
-        if amount <= 0:
-            raise forms.ValidationError("Amount must be greater than zero.")
-        return amount
+    phone_regex = RegexValidator(
+        regex=r'^\+?1?\d{9,15}$',
+        message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed."
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['phone_number'].validators.append(self.phone_regex)
+
+
+class CoinAddressForm(forms.ModelForm):
+    class Meta:
+        model = CoinAddress
+        fields = ['user', 'coin', 'address']

@@ -1,29 +1,14 @@
 # -*- coding: utf-8 -*-
-
-from datetime import timedelta, datetime
-import requests
 from _decimal import Decimal
+import requests
 from celery import shared_task
+from django.db import transaction
+from django.db.models import Sum
 from django.utils import timezone
-
-from .models import ProfitWallet, Currency, ExchangeRate, Investment, Wallet, ProfitTransaction
-import coreapi
+from .models import Coin, ExchangeRate, Wallet, TotalWallet, DayProfit, ProfitWallet, OwnersWallet
 
 
-# @shared_task
-# def update_profit_wallet():
-#     api = coreapi.Client()
-#     stats = api.get('http://195.181.240.210:10060//api/v2.5/data/stats?token=TjB6paqGspMA9ncWBzddEUhjy')
-#     totalprofit = stats['basic']['totalProfit']
-#
-#     profit_wallet = ProfitWallet()
-#     profit_wallet.balance = Decimal(totalprofit)
-#     profit_wallet.bot = "PT-BOT"
-#     profit_wallet.currency = "USDT"
-#     profit_wallet.date_updated = datetime.now().date(),
-#     profit_wallet.save()
-
-
+# Обновление курса монет
 @shared_task
 def update_exchange_rates():
     response = requests.get('https://api.binance.com/api/v3/ticker/24hr')
@@ -37,14 +22,14 @@ def update_exchange_rates():
         usdt_code = 'USDT'
 
         if symbol.endswith(usdt_code):
-            currency_code = symbol[:-len(usdt_code)]
+            coin_code = symbol[:-len(usdt_code)]
 
             try:
-                currency = Currency.objects.get(code=currency_code)
-            except Currency.DoesNotExist:
+                coin = Coin.objects.get(code=coin_code)
+            except Coin.DoesNotExist:
                 continue
 
-            exchange_rate, created = ExchangeRate.objects.get_or_create(currency=currency)
+            exchange_rate, created = ExchangeRate.objects.get_or_create(coin=coin)
             exchange_rate.rate = price
             exchange_rate.price_change = price_change
             exchange_rate.percent_change_1h = percent_change_1h
@@ -52,46 +37,121 @@ def update_exchange_rates():
             exchange_rate.save()
 
 
+# Рассчет общего баланса
 @shared_task
-def calculate_profit():
-    now = timezone.now()
-    active_investments = Investment.objects.filter(is_active=True)
-    success = False
+def calculate_total_balance():
+    coins = Wallet.objects.values('coin').distinct()
 
-    for investment in active_investments:
-        time_passed = now - investment.last_updated
+    for coin in coins:
+        coin_id = coin['coin']
+        coin_instance = Coin.objects.get(pk=coin_id)
+        total_balance = Wallet.objects.filter(coin_id=coin_id).aggregate(Sum('balance'))['balance__sum'] or Decimal(
+            '0.00')
+        owners_wallet = OwnersWallet.objects.filter(coin_id=coin_id).latest('last_replenishment')
 
-        if time_passed >= timedelta(minutes=1):
-            profit_percentage = investment.investment_plan.daily_profit_percentage
-            calculated_profit = investment.amount * (profit_percentage / 100)
+        total_wallet = TotalWallet.objects.create(coin=coin_instance)
+        total_wallet.total_balance = total_balance + owners_wallet.balance
+        total_wallet.date_created = timezone.now()
+        total_wallet.save()
 
-            profit_wallet, created = ProfitWallet.objects.get_or_create(
-                user=investment.user,
-                currency=investment.currency,
-                defaults={'balance': 0}
-            )
+        bot_profit = DayProfit.objects.latest('date_created').profittrailer_pnl
+        total_balance = TotalWallet.objects.latest('date_created').total_balance
+        total_balance_with_profit = bot_profit + total_balance
 
-            profit_wallet.balance += calculated_profit
-            profit_wallet.save()
+        total_wallet.total_balance_with_profit = total_balance_with_profit
+        total_wallet.relative_profit = bot_profit / total_balance_with_profit * 100
+        total_wallet.save()
 
-            transaction = ProfitTransaction.objects.create(
-                user=investment.user,
-                investment=investment,
-                profit_wallet=profit_wallet,
-                amount=calculated_profit,
-                date_received=now
-            )
+    return 'Successfully calculated total balance.'
 
-            user_wallet = Wallet.objects.get(user=investment.user, currency=investment.currency)
-            user_wallet.balance += calculated_profit
-            user_wallet.save()
 
-            investment.last_updated = now
-            investment.next_updated = now + timedelta(minutes=1)
-            investment.days_passed += 1
-            investment.save()
+# Рассчет вклада пользователя относительно общего баланса
+@shared_task
+def calc_user_percent_dep():
+    try:
+        coins = Wallet.objects.values_list('coin', flat=True).distinct()
 
-            success = True
+        for coin in coins:
+            total_balance_obj = TotalWallet.objects.filter(coin=coin).latest('date_created')
+            total_balance = total_balance_obj.total_balance or 0
+            owners_wallet = OwnersWallet.objects.filter(coin=coin).latest('last_replenishment')
+            owners_balance = owners_wallet.balance or 0
 
-    return success
+            if total_balance != 0:
+                owners_percentage_of_total_balance = (owners_balance / total_balance) * 100
+            else:
+                owners_percentage_of_total_balance = 0
+            owners_wallet.percentage_of_total_balance = owners_percentage_of_total_balance
+            owners_wallet.save()
 
+            wallets = Wallet.objects.filter(coin=coin)
+
+            for wallet in wallets:
+                user_balance = wallet.balance
+                if total_balance != 0:
+                    percentage_of_total_balance = (user_balance / total_balance) * 100
+                else:
+                    percentage_of_total_balance = 0
+                wallet.percentage_of_total_balance = percentage_of_total_balance
+                wallet.save()
+
+        return 'Successfully updated percentage_of_total_balance for all users'
+    except Exception as e:
+        return f'An error occurred: {str(e)}'
+
+
+# Рассчет профита
+@shared_task
+def calculate_user_profit():
+    try:
+        with transaction.atomic():
+            coin_ids = Wallet.objects.values_list('coin', flat=True).distinct()
+            print("Coins found:", coin_ids)  # Выведем список монет
+            for coin_id in coin_ids:
+                coin = Coin.objects.get(pk=coin_id)  # Получим экземпляр Coin по ID
+                profittrailer_pnl = DayProfit.objects.latest('date_created').profittrailer_pnl
+                print("Profittrailer_pnl for coin", coin, ":", profittrailer_pnl)  # Выведем pnl для каждой монеты
+                wallets = Wallet.objects.filter(coin=coin)
+                total_users_profit = Decimal(0)
+                for wallet in wallets:
+                    user_percentage = wallet.percentage_of_total_balance
+                    user_profit = Decimal(user_percentage) * Decimal(profittrailer_pnl) * Decimal(0.66) / Decimal(100)
+                    total_users_profit += user_profit
+                    print("User profit for wallet", wallet, ":", user_profit)  # Выведем профит для каждого кошелька
+
+                    profit_wallet = ProfitWallet.objects.create(
+                        user=wallet.user,
+                        coin=coin,  # Передаем экземпляр Coin
+                        amount=user_profit,
+                        date_created=timezone.now()
+                    )
+
+                    wallet.balance += user_profit
+                    wallet.save()
+                    print("New balance for wallet", wallet, ":", wallet.balance)  # Выведем новый баланс
+
+                total_wallet = TotalWallet.objects.filter(coin=coin).latest('date_created')
+                total_wallet.users_profit = total_users_profit
+                total_wallet.save()
+
+                # Получите существующий объект OwnersWallet для данной монеты
+                existing_owners_wallet = OwnersWallet.objects.filter(coin=coin).latest('last_replenishment')
+
+                # Создайте новый объект OwnersWallet, скопировав значения из существующего
+                owners_wallet = OwnersWallet.objects.create(
+                    coin=existing_owners_wallet.coin,
+                    balance=existing_owners_wallet.balance,
+                    profit=profittrailer_pnl - total_users_profit,
+                    last_replenishment=timezone.now()
+                )
+
+                # Теперь добавьте прибыль к балансу
+                owners_wallet.balance += owners_wallet.profit
+
+                # И сохраните изменения
+                owners_wallet.save()
+
+            return 'Successfully'
+    except Exception as e:
+        print("An error occurred:", str(e))  # Выведем ошибку, если она есть
+        return f'An error occurred: {str(e)}'

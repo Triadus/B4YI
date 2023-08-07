@@ -2,7 +2,6 @@
 {% load crispy_forms_filters %}
 {% load static %}
 {% load crispy_forms_tags %}
-{#{% load socialaccount %}#}
 {% block title %}Login{% endblock title %}
 {% block content %}
     <div class="account-pages pt-sm-5">
@@ -18,9 +17,6 @@
                                         <p>Sign in to continue to B4YI.</p>
                                     </div>
                                 </div>
-                                <div class="col-5 align-self-end">
-                                    <img src="{% static 'images/profile-img.png' %}" alt="" class="img-fluid">
-                                </div>
                             </div>
                         </div>
                         <div class="card-body pt-0">
@@ -28,14 +24,15 @@
                                 <a href="{% url 'dashboard' %}" class="auth-logo-light">
                                     <div class="avatar-md profile-user-wid mb-4">
                                             <span class="avatar-title rounded-circle bg-light">
-                                                <img src="{% static 'images/logo-light.svg' %}" alt=""
+                                                <img src="{% static 'images/4_logo_dark.png' %}" alt=""
                                                      class="rounded-circle" height="34">
                                             </span>
                                     </div>
                                 </a>
                                 <div class="avatar-md profile-user-wid mb-4">
                                             <span class="avatar-title rounded-circle bg-light">
-                                                <img src="{% static 'images/logo.svg' %}" alt="" class="rounded-circle"
+                                                <img src="{% static 'images/4_logo_dark.png' %}" alt=""
+                                                     class="rounded-circle"
                                                      height="34">
                                             </span>
                                 </div>

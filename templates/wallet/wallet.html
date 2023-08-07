@@ -11,16 +11,16 @@
         <div class="col-xl-12">
             <div class="card">
                 <div class="card-body">
-                    <h4 class="card-title mb-3">Currency rates</h4>
+                    <h4 class="card-title mb-3">Coin rates</h4>
                     <div class="row border-top">
 
                         {% for exchange_rate in exchange_rates %}
                             <div class="col-xl-2 p-1">
                                 <div class="card d-flex flex-column align-items-center mb-1 mt-3">
                                     <img class="img-fluid m-2" width="30"
-                                         src="{{ exchange_rate.currency.currency_image.url }}"
-                                         alt="{{ exchange_rate.currency.name }}">
-                                    <h5 class="card-title mb-1">{{ exchange_rate.currency.name }}</h5>
+                                         src="{{ exchange_rate.coin.coin_image.url }}"
+                                         alt="{{ exchange_rate.coin.name }}">
+                                    <h5 class="card-title mb-1">{{ exchange_rate.coin.name }}</h5>
                                     <p class="mb-0">$ {{ exchange_rate.rate }}</p>
                                     <p class="mb-3">
                                         <small class="text-muted"> 24H: {{ exchange_rate.price_change }}
@@ -46,11 +46,11 @@
                                 {% for balance_data in balance_datas %}
                                     <ul class="list-inline mb-1">
                                         <li class="list-inline-item">
-                                            <img src="{{ balance_data.currency.currency_image.url }}"
-                                                 alt="{{ balance_data.currency.name }}" height="20">
+                                            <img src="{{ balance_data.coin.coin_image.url }}"
+                                                 alt="{{ balance_data.coin.name }}" height="20">
                                         </li>
                                         <li class="list-inline-item">
-                                            <h5>{{ balance_data.currency }} {{ balance_data.balance }}</h5>
+                                            <h5>{{ balance_data.coin }} {{ balance_data.balance }}</h5>
                                         </li>
                                         <li class="list-inline-item">
                                             <span> ($ {{ balance_data.usdt_equivalent|floatformat:2 }})</span>
@@ -59,7 +59,7 @@
                                 {% empty %}
                                     <ul class="list-inline mb-0">
                                         <li class="list-inline-item">
-                                            You don't have wallets!
+                                            You don't have any Coins!
                                         </li>
                                     </ul>
                                 {% endfor %}
@@ -106,7 +106,7 @@
         <div class="col-xl-7">
             <div class="card">
                 <div class="card-body">
-                    <h4 class="card-title mb-4">Balance of all currencies ($
+                    <h4 class="card-title mb-4">Balance of all Coins ($
                         USD {{ total_usdt_balance|floatformat:2 }})</h4>
                     <div id="balance-chart"
                          data-colors='["--bs-success","--bs-primary", "--bs-danger","--bs-info", "--bs-warning"]'
@@ -129,7 +129,7 @@
                                     <th>ID No</th>
                                     <th>Date</th>
                                     <th>Type</th>
-                                    <th>Currency</th>
+                                    <th>Coin</th>
                                     <th>Amount</th>
                                     <th>Status</th>
                                 </tr>
@@ -141,7 +141,7 @@
 
                                         <td>{{ transaction.date_created|date:"d.m.Y H:i" }}</td>
                                         <td>{{ transaction.transaction_type }}</td>
-                                        <td>{{ transaction.currency }}</td>
+                                        <td>{{ transaction.coin }}</td>
                                         <td>{{ transaction.amount }}</td>
                                         <td class="badge-soft-success">{{ transaction.status }}</td>
                                     </tr>
