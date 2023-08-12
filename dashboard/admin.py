@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from _decimal import Decimal
-
 from django.contrib import admin, messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.mail import send_mail
@@ -9,7 +7,7 @@ from django.utils import timezone
 from django.utils.html import format_html
 
 from .models import Wallet, Coin, ProfitWallet, WalletReplenishmentRequest, WalletWithdrawalRequest, Transaction, \
-    ExchangeRate, UserProfile, DayProfit, CoinAddress, TotalWallet, OwnersWallet
+    ExchangeRate, UserProfile, DayProfit, TotalWallet, OwnersWallet, CoinNetwork, UserCoinAddress, OwnerCoinAddress
 from .tasks import update_exchange_rates, calculate_total_balance, calc_user_percent_dep, calculate_user_profit
 
 admin.site.site_header = 'B4YI ADMIN-PANEL'
@@ -45,6 +43,11 @@ class CoinAdmin(admin.ModelAdmin):
     readonly_fields = ('image_tag',)
 
 
+@admin.register(CoinNetwork)
+class CoinNetworkAdmin(admin.ModelAdmin):
+    list_display = ('coin', 'name', 'code')
+
+
 @admin.register(ExchangeRate)
 class ExchangeRateAdmin(admin.ModelAdmin):
     list_display = ['coin', 'rate', 'percent_change_1h', 'last_updated']
@@ -74,7 +77,8 @@ class ProfitWalletAdmin(admin.ModelAdmin):
 # Запрос на пополнение
 @admin.register(WalletReplenishmentRequest)
 class WalletReplenishmentRequestAdmin(admin.ModelAdmin):
-    list_display = ['user', 'amount', 'coin', 'date_requested', 'is_approved', 'is_executed', 'date_executed']
+    list_display = ['user', 'amount', 'coin', 'network', 'txid', 'date_requested', 'is_approved', 'is_executed',
+                    'date_executed']
     actions = ['execute_replenishment']
 
     def execute_replenishment(self, request, queryset):
@@ -86,16 +90,18 @@ class WalletReplenishmentRequestAdmin(admin.ModelAdmin):
                     try:
                         transaction = Transaction.objects.filter(user=replenishment_request.user,
                                                                  coin=replenishment_request.coin,
+                                                                 network=replenishment_request.network,
+                                                                 txid=replenishment_request.txid,
                                                                  transaction_type='replenishment',
                                                                  status='pending').latest('date_created')
-                        # Используем latest('date_created') для получения последней созданной транзакции
                         transaction.mark_completed()
                     except ObjectDoesNotExist:
-                        # Если нет транзакции с указанными параметрами, создаем новую
                         Transaction.objects.create(
                             user=replenishment_request.user,
                             transaction_type='replenishment',
                             coin=replenishment_request.coin,
+                            network=replenishment_request.network,
+                            txid=replenishment_request.txid,
                             amount=replenishment_request.amount,
                             status='completed'
                         )
@@ -133,7 +139,8 @@ class WalletReplenishmentRequestAdmin(admin.ModelAdmin):
 # Запрос на вывод средств
 @admin.register(WalletWithdrawalRequest)
 class WalletWithdrawalRequestAdmin(admin.ModelAdmin):
-    list_display = ['user', 'amount', 'coin', 'date_requested', 'is_approved', 'is_executed', 'date_executed']
+    list_display = ['user', 'amount', 'coin', 'network', 'date_requested', 'is_approved', 'is_executed',
+                    'date_executed']
     actions = ['approve_withdrawal']
 
     def approve_withdrawal(self, request, queryset):
@@ -148,6 +155,7 @@ class WalletWithdrawalRequestAdmin(admin.ModelAdmin):
 
                         transaction = Transaction.objects.get(user=withdrawal_request.user,
                                                               coin=withdrawal_request.coin,
+                                                              network=withdrawal_request.network,
                                                               transaction_type='withdrawal', status='pending')
                         transaction.mark_completed()
 
@@ -177,7 +185,7 @@ class WalletWithdrawalRequestAdmin(admin.ModelAdmin):
 # Создание транзакции
 @admin.register(Transaction)
 class TransactionAdmin(admin.ModelAdmin):
-    list_display = ['id', 'user', 'date_created', 'transaction_type', 'coin', 'amount', 'status']
+    list_display = ['id', 'user', 'date_created', 'transaction_type', 'coin', 'network', 'amount', 'txid', 'status']
     list_filter = ['transaction_type', 'status']
     search_fields = ['id']
     ordering = ('-date_created',)
@@ -199,9 +207,14 @@ class UserProfileAdmin(admin.ModelAdmin):
     list_display = ['user', ]
 
 
-@admin.register(CoinAddress)
-class CoinAddressAdmin(admin.ModelAdmin):
+@admin.register(UserCoinAddress)
+class UserCoinAddressAdmin(admin.ModelAdmin):
     list_display = ['user', 'coin', 'network', 'address']
+
+
+@admin.register(OwnerCoinAddress)
+class OwnerCoinAddressAdmin(admin.ModelAdmin):
+    list_display = ['coin', 'network', 'address']
 
 
 @admin.register(DayProfit)
@@ -212,7 +225,7 @@ class DayProfitAdmin(admin.ModelAdmin):
 @admin.register(TotalWallet)
 class TotalWalletAdmin(admin.ModelAdmin):
     list_display = (
-    'coin', 'total_balance', 'total_balance_with_profit', 'relative_profit', 'users_profit', 'date_created')
+        'coin', 'total_balance', 'total_balance_with_profit', 'relative_profit', 'users_profit', 'date_created')
     actions = ['calculate_total_balance']
 
     def total_balance_with_profit(self, obj):

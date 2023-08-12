@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from datetime import timedelta
+
 from allauth.account.views import PasswordChangeView, PasswordSetView
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -13,8 +14,10 @@ from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views import View
 from django.views.generic import ListView
+
 from .forms import WalletReplenishmentRequestForm, WalletWithdrawalRequestForm, UserProfileForm
-from .models import Wallet, WalletWithdrawalRequest, Transaction, ExchangeRate, UserProfile, ProfitWallet
+from .models import Wallet, WalletWithdrawalRequest, Transaction, ExchangeRate, UserProfile, ProfitWallet, \
+    OwnerCoinAddress
 
 
 @login_required
@@ -171,7 +174,14 @@ class MyPasswordSetView(LoginRequiredMixin, PasswordSetView):
 class WalletReplenishmentRequestView(LoginRequiredMixin, View):
     def get(self, request):
         form = WalletReplenishmentRequestForm()
-        return render(request, 'wallet/replenishment.html', {'form': form})
+        networks = OwnerCoinAddress.objects.all()
+
+        context = {
+            'form': form,
+            'networks': networks,
+        }
+
+        return render(request, 'wallet/replenishment.html', context)
 
     def post(self, request):
         form = WalletReplenishmentRequestForm(request.POST)
@@ -184,16 +194,24 @@ class WalletReplenishmentRequestView(LoginRequiredMixin, View):
                 user=request.user,
                 transaction_type='replenishment',
                 coin=replenishment_request.coin,
-                amount=replenishment_request.amount
+                network=replenishment_request.network,
+                amount=replenishment_request.amount,
+                txid=replenishment_request.txid,
             )
 
             mail_admins(
                 subject='Запрос на пополнение',
-                message=f'{request.user.username} {replenishment_request.amount} {replenishment_request.coin}',
+                message=f'{request.user.username} {replenishment_request.amount} {replenishment_request.coin} ({replenishment_request.network})',
                 fail_silently=False
             )
+
             return redirect('replenishment_success')
-        return render(request, 'wallet/replenishment.html', {'form': form})
+
+        context = {
+            'form': form,
+        }
+
+        return render(request, 'wallet/replenishment.html', context)
 
 
 # Успешный запрос на пополнение
@@ -210,7 +228,12 @@ class WalletWithdrawalRequestView(LoginRequiredMixin, View):
             return redirect('dashboard')
 
         form = WalletWithdrawalRequestForm()
-        return render(request, 'wallet/withdrawal.html', {'form': form})
+
+        context = {
+            'form': form,
+        }
+
+        return render(request, 'wallet/withdrawal.html', context)
 
     def post(self, request):
 
@@ -230,12 +253,13 @@ class WalletWithdrawalRequestView(LoginRequiredMixin, View):
                 user=request.user,
                 transaction_type='withdrawal',
                 coin=withdrawal_request.coin,
+                network=withdrawal_request.network,
                 amount=withdrawal_request.amount
             )
 
             mail_admins(
                 subject='Запрос на вывод средств',
-                message=f'{request.user.username} {withdrawal_request.amount} {withdrawal_request.coin}',
+                message=f'{request.user.username} {withdrawal_request.amount} {withdrawal_request.coin} ({withdrawal_request.network})',
                 fail_silently=False
             )
             return redirect('withdrawal_success')

@@ -131,6 +131,7 @@
                                     <th>Type</th>
                                     <th>Coin</th>
                                     <th>Amount</th>
+                                    <th>TxId</th>
                                     <th>Status</th>
                                 </tr>
                                 </thead>
@@ -143,6 +144,7 @@
                                         <td>{{ transaction.transaction_type }}</td>
                                         <td>{{ transaction.coin }}</td>
                                         <td>{{ transaction.amount }}</td>
+                                        <td>{{ transaction.txid }}</td>
                                         <td class="badge-soft-success">{{ transaction.status }}</td>
                                     </tr>
                                 {% endfor %}

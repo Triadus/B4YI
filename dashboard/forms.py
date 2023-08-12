@@ -5,7 +5,7 @@ from crispy_forms.helper import FormHelper
 from django import forms
 from django.core.validators import RegexValidator
 
-from dashboard.models import WalletReplenishmentRequest, WalletWithdrawalRequest, UserProfile, CoinAddress, Coin
+from dashboard.models import WalletReplenishmentRequest, WalletWithdrawalRequest, UserProfile, Coin
 
 
 class UserLoginForm(LoginForm):
@@ -84,14 +84,17 @@ class PasswordSetForm(SetPasswordForm):
 # Форма для запроса пополнения кошелька
 class WalletReplenishmentRequestForm(forms.ModelForm):
 
-    # Фильтрация по статусу если валюта активна
     def __init__(self, *args, **kwargs):
         super(WalletReplenishmentRequestForm, self).__init__(*args, **kwargs)
         self.fields['coin'].queryset = Coin.objects.filter(is_active=True)
+        self.fields['coin'].widget.attrs.update({'class': 'select form-control form-control-sm mb-3'})
+        self.fields['network'].widget.attrs.update({'class': 'select form-control form-control-sm mb-3'})
+        self.fields['amount'].widget.attrs.update({'class': 'select form-control form-control-sm mb-3'})
+        self.fields['txid'].widget.attrs.update({'class': 'select form-control form-control-sm mb-3'})
 
     class Meta:
         model = WalletReplenishmentRequest
-        fields = ['coin', 'amount']
+        fields = ['coin', 'network', 'amount', 'txid']
 
 
 # Форма для запроса на вывод из кошелька
@@ -103,7 +106,7 @@ class WalletWithdrawalRequestForm(forms.ModelForm):
 
     class Meta:
         model = WalletWithdrawalRequest
-        fields = ['coin', 'amount']
+        fields = ['coin', 'network', 'amount']
 
 
 # Форма профиля пользователя
@@ -123,9 +126,3 @@ class UserProfileForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['phone_number'].validators.append(self.phone_regex)
-
-
-class CoinAddressForm(forms.ModelForm):
-    class Meta:
-        model = CoinAddress
-        fields = ['user', 'coin', 'address']

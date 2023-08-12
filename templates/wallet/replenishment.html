@@ -1,21 +1,82 @@
 {% extends 'dashboard/base.html' %}
 {% load crispy_forms_tags %}
 {% load crispy_forms_filters %}
+{% load crispy_forms_field %}
+{% load static %}
 
 {% block content %}
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <h4 class="card-title">Wallet replenishment request</h4>
-                    <form method="post">
-                        {% csrf_token %}
-                        {{ form | crispy }}
-                        <button type="submit" class="btn btn-primary mt-3">Submit</button>
-                    </form>
-                </div>
-            </div>
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="card card overflow-hidden">
+                    <div class="bg-primary bg-soft">
+                        <div class="row">
+                            <h5 class="m-2">Wallet replenishment request</h5>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="container">
+                            <div class="row">
+                                <p>For payment, you need to send a transfer to one of the wallets below, depending on
+                                    your cryptocurrency and the network you use.</p>
+                                <div class="table-responsive shadow">
+                                    <table class="table mb-0">
+                                        <thead class="table-light bg-soft">
+                                        <tr>
+                                            <th scope="col">Coin</th>
+                                            <th scope="col">Network</th>
+                                            <th scope="col">Address</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        {% for network in networks %}
+                                            <tr>
+                                                <th scope="row">{{ network.coin }}</th>
+                                                <td>{{ network.network }}</td>
+                                                <td class="">{{ network.address }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="row justify-content-md-center m-5">
+                                <div class="col-xl-6">
+                                    <h5 class="text-center">After the transfer fill out this form</h5>
+                                    <form method="post">
+                                        {% csrf_token %}
+                                        {{ form | crispy }}
+                                        <div class="d-flex justify-content-center">
+                                            <button type="submit"
+                                                    class="btn btn-primary waves-effect waves-light btn-sm"
+                                                    style="margin-right: 0.5rem;">
+                                                Submit
+                                            </button>
+                                            <a class="btn btn-outline-secondary waves-effect waves-light btn-sm"
+                                               href="{% url 'dashboard' %}">Cancel</a>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
 
+                        <p><span class="badge-soft-warning">Attention:</span> The transfer is checked manually, so
+                            the
+                            waiting time is from 5 minutes to 24
+                            hours. As a rule, all transfers are confirmed within an hour. After that you will receive a
+                            notification to your e-mail.
+                        </p>
+                        <p><span class="badge-soft-warning">Attention:</span> If after the expiration of the specified
+                            period your payment has not
+                            been
+                            confirmed
+                            (no letter of successful payment has been received), please inform my support team about
+                            this.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
         </div>
     </div>
 {% endblock %}

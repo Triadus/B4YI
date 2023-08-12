@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import os
-
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -22,7 +21,7 @@ ALLOWED_HOSTS = ['*']
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'b4yi',
+        'NAME': 'b4youi',
         'USER': 'triadus',
         'PASSWORD': 'triadus',
         'HOST': 'localhost',

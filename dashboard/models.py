@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 import os
 import uuid
+
+from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, RegexValidator
+from django.db import models
 from django.db.models.signals import pre_delete, pre_save
 from django.dispatch import receiver
-from django.utils.timezone import now
-from django.utils.translation import gettext_lazy as _
-from django.contrib.auth.models import User
-from django.db import models
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 User._meta.get_field('email')._unique = True
 
 
-# Модель выбора валют
+# Coin
 class Coin(models.Model):
     name = models.CharField(max_length=20)
     code = models.CharField(max_length=5)
@@ -22,6 +22,20 @@ class Coin(models.Model):
 
     def __str__(self):
         return self.code
+
+
+# Coin network
+class CoinNetwork(models.Model):
+    coin = models.ForeignKey(Coin, on_delete=models.CASCADE)
+    name = models.CharField(max_length=30)
+    code = models.CharField(max_length=10)
+
+    def __str__(self):
+        return f"{self.name}"
+
+    class Meta:
+        ordering = ['coin']
+        verbose_name = 'Coin Network'
 
 
 # Профиль пользователя
@@ -67,19 +81,23 @@ def delete_avatar_file(sender, instance, **kwargs):
         os.remove(instance.avatar.path)
 
 
-class CoinAddress(models.Model):
+class UserCoinAddress(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     coin = models.ForeignKey(Coin, on_delete=models.CASCADE)
-    NETWORK_CHOICES = (
-        ('BSC', 'BNB Smart Chain (BEP20)'),
-        ('ETH', 'Ethereum (ERC20)'),
-        ('TRX', 'Tron (TRC20)'),
-    )
-    network = models.CharField(max_length=4, choices=NETWORK_CHOICES)
+    network = models.ForeignKey(CoinNetwork, on_delete=models.CASCADE)
     address = models.CharField(max_length=100, blank=True)
 
     def __str__(self):
-        return f"{self.user.username} - {self.coin.name} Coin Address"
+        return f"{self.user.username} - {self.coin.name}"
+
+
+class OwnerCoinAddress(models.Model):
+    coin = models.ForeignKey(Coin, on_delete=models.CASCADE)
+    network = models.ForeignKey(CoinNetwork, on_delete=models.CASCADE)
+    address = models.CharField(max_length=100, blank=True)
+
+    def __str__(self):
+        return f"{self.network.name} - {self.coin.name}"
 
 
 # Модель курса валют
@@ -174,6 +192,8 @@ class WalletReplenishmentRequest(models.Model):
     user = models.ForeignKey(User, on_delete=models.PROTECT)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     coin = models.ForeignKey(Coin, on_delete=models.PROTECT)
+    network = models.ForeignKey(CoinNetwork, on_delete=models.CASCADE)
+    txid = models.CharField(max_length=100, null=True, blank=True)
     is_approved = models.BooleanField(default=False)
     is_executed = models.BooleanField(default=False)
     date_requested = models.DateTimeField(default=timezone.now)
@@ -194,7 +214,7 @@ class WalletReplenishmentRequest(models.Model):
         if original_request is not None and original_request.amount != self.amount:
             try:
                 transaction = Transaction.objects.get(user=self.user, transaction_type='replenishment',
-                                                      coin=self.coin)
+                                                      coin=self.coin, network=self.network, txid=self.txid)
                 transaction.amount = self.amount
                 transaction.save()
             except Transaction.DoesNotExist:
@@ -202,7 +222,9 @@ class WalletReplenishmentRequest(models.Model):
                     user=self.user,
                     transaction_type='replenishment',
                     coin=self.coin,
-                    amount=self.amount
+                    network=self.network,
+                    amount=self.amount,
+                    txid=self.txid,
                 )
 
     def __str__(self):
@@ -217,6 +239,8 @@ class WalletWithdrawalRequest(models.Model):
     user = models.ForeignKey(User, on_delete=models.PROTECT)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     coin = models.ForeignKey(Coin, on_delete=models.PROTECT)
+    network = models.ForeignKey(CoinNetwork, on_delete=models.CASCADE)
+    txid = models.CharField(max_length=100, null=True, blank=True)
     is_approved = models.BooleanField(default=False)
     is_executed = models.BooleanField(default=False)
     date_requested = models.DateTimeField(default=timezone.now)
@@ -237,7 +261,7 @@ class WalletWithdrawalRequest(models.Model):
         if original_request is not None and original_request.amount != self.amount:
             try:
                 transaction = Transaction.objects.get(user=self.user, transaction_type='withdrawal',
-                                                      coin=self.coin)
+                                                      coin=self.coin, network=self.network)
                 transaction.amount = self.amount
                 transaction.save()
             except Transaction.DoesNotExist:
@@ -245,6 +269,7 @@ class WalletWithdrawalRequest(models.Model):
                     user=self.user,
                     transaction_type='withdrawal',
                     coin=self.coin,
+                    network=self.network,
                     amount=self.amount
                 )
 
@@ -264,6 +289,8 @@ class Transaction(models.Model):
         ('withdrawal', _('Withdrawal'))
     ))
     coin = models.ForeignKey(Coin, on_delete=models.PROTECT)
+    network = models.ForeignKey(CoinNetwork, on_delete=models.CASCADE)
+    txid = models.CharField(max_length=100, null=True, blank=True)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=100, default='pending', choices=(
         ('pending', _('Pending')),
